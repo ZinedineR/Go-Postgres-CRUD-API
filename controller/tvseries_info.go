@@ -25,7 +25,7 @@ type Response struct {
 	Data    []models.TV `json:"data"`
 }
 
-// TambahBuku
+// Add new TV series
 func NewTV(w http.ResponseWriter, r *http.Request) {
 
 	// create an empty user of type models.User
@@ -52,7 +52,7 @@ func NewTV(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
-// AmbilBuku mengambil single data dengan parameter id
+// return one row of tv series by id
 func GetTV(w http.ResponseWriter, r *http.Request) {
 	// kita set headernya
 	w.Header().Set("Context-Type", "application/x-www-form-urlencoded")
@@ -78,7 +78,7 @@ func GetTV(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(tv)
 }
 
-// Ambil semua data buku
+// return all rows from tvseries_info
 func GetTVAll(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -98,6 +98,7 @@ func GetTVAll(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+//Update one row from tvseries_info by id
 func UpdateTVNew(w http.ResponseWriter, r *http.Request) {
 
 	// kita ambil request parameter idnya
@@ -136,6 +137,7 @@ func UpdateTVNew(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
+//Delete one row
 func RemoveTV(w http.ResponseWriter, r *http.Request) {
 
 	// kita ambil request parameter idnya
