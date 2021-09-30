@@ -1,15 +1,14 @@
 # Simple CRUD API Golang Postgres
 
-CRUD API Golang dengan database PostgreSql
+CRUD API Golang with postgresql
+ERD : 
+![Screenshot](erd.png)
 
-## Cara pakenya
-- Silahkan download repo ini.
-- Siapkan database postgres, atau bisa pakai docker, tinggal jalankan perintah
-```
-docker-compose up
-```
-- Ubah pada env file sesuai settingan kalian
-- jalankan perintah server golangnya
+## how-to
+- download this repo
+- prepare the database, just run the query in data.sql
+- Change .env as your setting
+- run the program
 ```
 go run main.go
 ```
