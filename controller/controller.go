@@ -20,32 +20,32 @@ type response struct {
 }
 
 type Response struct {
-	Status  int           `json:"status"`
-	Message string        `json:"message"`
-	Data    []models.Buku `json:"data"`
+	Status  int         `json:"status"`
+	Message string      `json:"message"`
+	Data    []models.TV `json:"data"`
 }
 
 // TambahBuku
-func TmbhBuku(w http.ResponseWriter, r *http.Request) {
+func NewTV(w http.ResponseWriter, r *http.Request) {
 
 	// create an empty user of type models.User
 	// kita buat empty buku dengan tipe models.Buku
-	var buku models.Buku
+	var tv models.TV
 
 	// decode data json request ke buku
-	err := json.NewDecoder(r.Body).Decode(&buku)
+	err := json.NewDecoder(r.Body).Decode(&tv)
 
 	if err != nil {
 		log.Fatalf("Tidak bisa mendecode dari request body.  %v", err)
 	}
 
 	// panggil modelsnya lalu insert buku
-	insertID := models.TambahBuku(buku)
+	insertID := models.AddTV(tv)
 
 	// format response objectnya
 	res := response{
 		ID:      insertID,
-		Message: "Data buku telah ditambahkan",
+		Message: "TV series info has been added",
 	}
 
 	// kirim response
@@ -53,7 +53,7 @@ func TmbhBuku(w http.ResponseWriter, r *http.Request) {
 }
 
 // AmbilBuku mengambil single data dengan parameter id
-func AmbilBuku(w http.ResponseWriter, r *http.Request) {
+func GetTV(w http.ResponseWriter, r *http.Request) {
 	// kita set headernya
 	w.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -64,41 +64,41 @@ func AmbilBuku(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(params["id"])
 
 	if err != nil {
-		log.Fatalf("Tidak bisa mengubah dari string ke int.  %v", err)
+		log.Fatalf("String to int conversion error.  %v", err)
 	}
 
 	// memanggil models ambilsatubuku dengan parameter id yg nantinya akan mengambil single data
-	buku, err := models.AmbilSatuBuku(int64(id))
+	tv, err := models.GetOneTV(int64(id))
 
 	if err != nil {
-		log.Fatalf("Tidak bisa mengambil data buku. %v", err)
+		log.Fatalf("TV series info could not be restracted. %v", err)
 	}
 
 	// kirim response
-	json.NewEncoder(w).Encode(buku)
+	json.NewEncoder(w).Encode(tv)
 }
 
 // Ambil semua data buku
-func AmbilSemuaBuku(w http.ResponseWriter, r *http.Request) {
+func GetTVAll(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	// memanggil models AmbilSemuaBuku
-	bukus, err := models.AmbilSemuaBuku()
+	tvs, err := models.GetTVdata()
 
 	if err != nil {
-		log.Fatalf("Tidak bisa mengambil data. %v", err)
+		log.Fatalf("Data could not be restracted. %v", err)
 	}
 
 	var response Response
 	response.Status = 1
 	response.Message = "Success"
-	response.Data = bukus
+	response.Data = tvs
 
 	// kirim semua response
 	json.NewEncoder(w).Encode(response)
 }
 
-func UpdateBuku(w http.ResponseWriter, r *http.Request) {
+func UpdateTVNew(w http.ResponseWriter, r *http.Request) {
 
 	// kita ambil request parameter idnya
 	params := mux.Vars(r)
@@ -107,24 +107,24 @@ func UpdateBuku(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(params["id"])
 
 	if err != nil {
-		log.Fatalf("Tidak bisa mengubah dari string ke int.  %v", err)
+		log.Fatalf("TV series info could not be restracted.  %v", err)
 	}
 
 	// buat variable buku dengan type models.Buku
-	var buku models.Buku
+	var tv models.TV
 
 	// decode json request ke variable buku
-	err = json.NewDecoder(r.Body).Decode(&buku)
+	err = json.NewDecoder(r.Body).Decode(&tv)
 
 	if err != nil {
-		log.Fatalf("Tidak bisa decode request body.  %v", err)
+		log.Fatalf("Could not decode body request.  %v", err)
 	}
 
 	// panggil updatebuku untuk mengupdate data
-	updatedRows := models.UpdateBuku(int64(id), buku)
+	updatedRows := models.UpdateTV(int64(id), tv)
 
 	// ini adalah format message berupa string
-	msg := fmt.Sprintf("Buku telah berhasil diupdate. Jumlah yang diupdate %v rows/record", updatedRows)
+	msg := fmt.Sprintf("TV series updated. Updated %v row(s)/record(s)", updatedRows)
 
 	// ini adalah format response message
 	res := response{
@@ -136,7 +136,7 @@ func UpdateBuku(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
-func HapusBuku(w http.ResponseWriter, r *http.Request) {
+func RemoveTV(w http.ResponseWriter, r *http.Request) {
 
 	// kita ambil request parameter idnya
 	params := mux.Vars(r)
@@ -145,14 +145,14 @@ func HapusBuku(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(params["id"])
 
 	if err != nil {
-		log.Fatalf("Tidak bisa mengubah dari string ke int.  %v", err)
+		log.Fatalf("Error during string to int conversion.  %v", err)
 	}
 
 	// panggil fungsi hapusbuku , dan convert int ke int64
-	deletedRows := models.HapusBuku(int64(id))
+	deletedRows := models.DeleteTV(int64(id))
 
 	// ini adalah format message berupa string
-	msg := fmt.Sprintf("buku sukses di hapus. Total data yang dihapus %v", deletedRows)
+	msg := fmt.Sprintf("Tv series info deleted. Affected Row(s) :  %v", deletedRows)
 
 	// ini adalah format reponse message
 	res := response{

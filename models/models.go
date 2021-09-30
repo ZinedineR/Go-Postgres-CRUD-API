@@ -13,14 +13,19 @@ import (
 // kita coba dengan jika datanya null
 // jika return datanya ada yg null, silahkan pake NullString, contohnya dibawah
 // Penulis       config.NullString `json:"penulis"`
-type Buku struct {
-	ID            int64  `json:"id"`
-	Judul_buku    string `json:"judul_buku"`
-	Penulis       string `json:"penulis"`
-	Tgl_publikasi string `json:"tgl_publikasi"`
+type TV struct {
+	id       int64  `json:"id"`
+	title    string `json:"title"`
+	producer string `json:"producer"`
+}
+type Detailed struct {
+	id       int64 `json:"id"`
+	season   int64 `json:"season"`
+	episodes int64 `json:"episodes"`
+	year     int64 `json:"year"`
 }
 
-func TambahBuku(buku Buku) int64 {
+func AddTV(tv TV) int64 {
 
 	// mengkoneksikan ke db postgres
 	db := config.CreateConnection()
@@ -30,42 +35,69 @@ func TambahBuku(buku Buku) int64 {
 
 	// kita buat insert query
 	// mengembalikan nilai id akan mengembalikan id dari buku yang dimasukkan ke db
-	sqlStatement := `INSERT INTO buku (judul_buku, penulis, tgl_publikasi) VALUES ($1, $2, $3) RETURNING id`
+	sqlStatement := `INSERT INTO tvseries_info (title, producer) VALUES ($1, $2) RETURNING id`
 
 	// id yang dimasukkan akan disimpan di id ini
 	var id int64
 
 	// Scan function akan menyimpan insert id didalam id id
-	err := db.QueryRow(sqlStatement, buku.Judul_buku, buku.Penulis, buku.Tgl_publikasi).Scan(&id)
+	err := db.QueryRow(sqlStatement, tv.title, tv.producer).Scan(&id)
 
 	if err != nil {
-		log.Fatalf("Tidak Bisa mengeksekusi query. %v", err)
+		log.Fatalf("Query could not be executed. %v", err)
 	}
 
-	fmt.Printf("Insert data single record %v", id)
+	fmt.Printf("Data inserted in record %v", id)
 
 	// return insert id
 	return id
 }
+func AddDetailed(detail Detailed) int64 {
 
-// ambil satu buku
-func AmbilSemuaBuku() ([]Buku, error) {
 	// mengkoneksikan ke db postgres
 	db := config.CreateConnection()
 
 	// kita tutup koneksinya di akhir proses
 	defer db.Close()
 
-	var bukus []Buku
+	// kita buat insert query
+	// mengembalikan nilai id akan mengembalikan id dari buku yang dimasukkan ke db
+	sqlStatement := `INSERT INTO detailed (id, season, episodes, year) VALUES ($1, $2, $3, $4) RETURNING id`
+
+	// id yang dimasukkan akan disimpan di id ini
+	var id int64
+
+	// Scan function akan menyimpan insert id didalam id id
+	err := db.QueryRow(sqlStatement, detail.id, detail.season, detail.episodes, detail.year).Scan(&id)
+
+	if err != nil {
+		log.Fatalf("Query could not be executed. %v", err)
+	}
+
+	fmt.Printf("Data inserted in record %v", id)
+
+	// return insert id
+	return id
+}
+
+// ambil buku
+func GetTVdata() ([]TV, error) {
+	// mengkoneksikan ke db postgres
+	db := config.CreateConnection()
+
+	// kita tutup koneksinya di akhir proses
+	defer db.Close()
+
+	var tvs []TV
 
 	// kita buat select query
-	sqlStatement := `SELECT * FROM buku`
+	sqlStatement := `SELECT * FROM tvseries_info`
 
 	// mengeksekusi sql query
 	rows, err := db.Query(sqlStatement)
 
 	if err != nil {
-		log.Fatalf("tidak bisa mengeksekusi query. %v", err)
+		log.Fatalf("Query could not be executed. %v", err)
 	}
 
 	// kita tutup eksekusi proses sql qeurynya
@@ -73,57 +105,143 @@ func AmbilSemuaBuku() ([]Buku, error) {
 
 	// kita iterasi mengambil datanya
 	for rows.Next() {
-		var buku Buku
+		var tv TV
 
 		// kita ambil datanya dan unmarshal ke structnya
-		err = rows.Scan(&buku.ID, &buku.Judul_buku, &buku.Penulis, &buku.Tgl_publikasi)
+		err = rows.Scan(&tv.id, &tv.title, &tv.producer)
 
 		if err != nil {
-			log.Fatalf("tidak bisa mengambil data. %v", err)
+			log.Fatalf("No data. %v", err)
 		}
 
 		// masukkan kedalam slice bukus
-		bukus = append(bukus, buku)
+		tvs = append(tvs, tv)
 
 	}
 
 	// return empty buku atau jika error
-	return bukus, err
+	return tvs, err
 }
 
 // mengambil satu buku
-func AmbilSatuBuku(id int64) (Buku, error) {
+func GetOneTV(id int64) (TV, error) {
 	// mengkoneksikan ke db postgres
 	db := config.CreateConnection()
 
 	// kita tutup koneksinya di akhir proses
 	defer db.Close()
 
-	var buku Buku
+	var tv TV
 
 	// buat sql query
-	sqlStatement := `SELECT * FROM buku WHERE id=$1`
+	sqlStatement := `SELECT * FROM tvseries_info WHERE id=$1`
 
 	// eksekusi sql statement
 	row := db.QueryRow(sqlStatement, id)
 
-	err := row.Scan(&buku.ID, &buku.Judul_buku, &buku.Penulis, &buku.Tgl_publikasi)
+	err := row.Scan(&tv.id, &tv.title, &tv.producer)
 
 	switch err {
 	case sql.ErrNoRows:
-		fmt.Println("Tidak ada data yang dicari!")
-		return buku, nil
+		fmt.Println("Data not found")
+		return tv, nil
 	case nil:
-		return buku, nil
+		return tv, nil
 	default:
-		log.Fatalf("tidak bisa mengambil data. %v", err)
+		log.Fatalf("No data. %v", err)
 	}
 
-	return buku, err
+	return tv, err
+}
+
+// ambil buku
+func GetDetaildata() ([]Detailed, error) {
+	// mengkoneksikan ke db postgres
+	db := config.CreateConnection()
+
+	// kita tutup koneksinya di akhir proses
+	defer db.Close()
+
+	var details []Detailed
+
+	// kita buat select query
+	sqlStatement := `SELECT * FROM detailed`
+
+	// mengeksekusi sql query
+	rows, err := db.Query(sqlStatement)
+
+	if err != nil {
+		log.Fatalf("Query could not be executed. %v", err)
+	}
+
+	// kita tutup eksekusi proses sql qeurynya
+	defer rows.Close()
+
+	// kita iterasi mengambil datanya
+	for rows.Next() {
+		var detail Detailed
+
+		// kita ambil datanya dan unmarshal ke structnya
+		err = rows.Scan(&detail.id, &detail.season, &detail.episodes, &detail.year)
+
+		if err != nil {
+			log.Fatalf("No data. %v", err)
+		}
+
+		// masukkan kedalam slice bukus
+		details = append(details, detail)
+
+	}
+
+	// return empty buku atau jika error
+	return details, err
+}
+
+// mengambil satu buku
+func GetOneDetail() ([]Detailed, error) {
+	// mengkoneksikan ke db postgres
+	db := config.CreateConnection()
+
+	// kita tutup koneksinya di akhir proses
+	defer db.Close()
+
+	var details []Detailed
+
+	// kita buat select query
+	sqlStatement := `SELECT * FROM detailed WHERE id=$1`
+
+	// mengeksekusi sql query
+	rows, err := db.Query(sqlStatement)
+
+	if err != nil {
+		log.Fatalf("Query could not be executed. %v", err)
+	}
+
+	// kita tutup eksekusi proses sql qeurynya
+	defer rows.Close()
+
+	// kita iterasi mengambil datanya
+	for rows.Next() {
+		var detail Detailed
+
+		// kita ambil datanya dan unmarshal ke structnya
+		err = rows.Scan(&detail.id, &detail.season, &detail.episodes, &detail.year)
+
+		if err != nil {
+			log.Fatalf("No data. %v", err)
+		}
+
+		// masukkan kedalam slice bukus
+		details = append(details, detail)
+
+	}
+
+	// return empty buku atau jika error
+	return details, err
 }
 
 // update user in the DB
-func UpdateBuku(id int64, buku Buku) int64 {
+func UpdateTV(id int64, tv TV) int64 {
 
 	// mengkoneksikan ke db postgres
 	db := config.CreateConnection()
@@ -132,13 +250,13 @@ func UpdateBuku(id int64, buku Buku) int64 {
 	defer db.Close()
 
 	// kita buat sql query create
-	sqlStatement := `UPDATE buku SET judul_buku=$2, penulis=$3, tgl_publikasi=$4 WHERE id=$1`
+	sqlStatement := `UPDATE tvseries_info SET title=$2, producer=$3 WHERE id=$1`
 
 	// eksekusi sql statement
-	res, err := db.Exec(sqlStatement, id, buku.Judul_buku, buku.Penulis, buku.Tgl_publikasi)
+	res, err := db.Exec(sqlStatement, id, tv.title, tv.producer)
 
 	if err != nil {
-		log.Fatalf("Tidak bisa mengeksekusi query. %v", err)
+		log.Fatalf("Could not execute query. %v", err)
 	}
 
 	// cek berapa banyak row/data yang diupdate
@@ -146,15 +264,15 @@ func UpdateBuku(id int64, buku Buku) int64 {
 
 	//kita cek
 	if err != nil {
-		log.Fatalf("Error ketika mengecheck rows/data yang diupdate. %v", err)
+		log.Fatalf("Error checking the row. %v", err)
 	}
 
-	fmt.Printf("Total rows/record yang diupdate %v\n", rowsAffected)
+	fmt.Printf("Row(s) affected %v\n", rowsAffected)
 
 	return rowsAffected
 }
 
-func HapusBuku(id int64) int64 {
+func DeleteTV(id int64) int64 {
 
 	// mengkoneksikan ke db postgres
 	db := config.CreateConnection()
@@ -163,23 +281,53 @@ func HapusBuku(id int64) int64 {
 	defer db.Close()
 
 	// buat sql query
-	sqlStatement := `DELETE FROM buku WHERE id=$1`
+	sqlStatement := `DELETE FROM tvseries_info WHERE id=$1`
 
 	// eksekusi sql statement
 	res, err := db.Exec(sqlStatement, id)
 
 	if err != nil {
-		log.Fatalf("tidak bisa mengeksekusi query. %v", err)
+		log.Fatalf("Could not execute query. %v", err)
 	}
 
 	// cek berapa jumlah data/row yang di hapus
 	rowsAffected, err := res.RowsAffected()
 
 	if err != nil {
-		log.Fatalf("tidak bisa mencari data. %v", err)
+		log.Fatalf("Data not found. %v", err)
 	}
 
-	fmt.Printf("Total data yang terhapus %v", rowsAffected)
+	fmt.Printf("Row(s) deleted %v", rowsAffected)
+
+	return rowsAffected
+}
+
+func DeleteDetailed(id int64) int64 {
+
+	// mengkoneksikan ke db postgres
+	db := config.CreateConnection()
+
+	// kita tutup koneksinya di akhir proses
+	defer db.Close()
+
+	// buat sql query
+	sqlStatement := `DELETE FROM detailed WHERE id=$1`
+
+	// eksekusi sql statement
+	res, err := db.Exec(sqlStatement, id)
+
+	if err != nil {
+		log.Fatalf("Could not execute query. %v", err)
+	}
+
+	// cek berapa jumlah data/row yang di hapus
+	rowsAffected, err := res.RowsAffected()
+
+	if err != nil {
+		log.Fatalf("Data not found. %v", err)
+	}
+
+	fmt.Printf("Row(s) deleted %v", rowsAffected)
 
 	return rowsAffected
 }
